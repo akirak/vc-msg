@@ -311,9 +311,11 @@ and is a blackbox to 'vc-msg.el'."
    (("c" vc-msg-show-commit "Commit" :exit t)
     ("l" vc-msg-log "Log" :exit t))
    "Blame"
-   (("bb" magit-blame-addition "Add")
-    ("bq" magit-blame-quit "Quit")
-    ("bc" magit-blame-cycle-style "Style"))))
+   (("b" (if magit-blame-mode
+             (magit-blame-cycle-style)
+           (magit-blame-addition nil))
+     "Show")
+    ("B" magit-blame-quit "Quit"))))
 
 ;;;###autoload
 (defun vc-msg-show ()
