@@ -168,7 +168,7 @@ Parse the command execution output and return a plist:
      ((string-match-p "Not Committed Yet" author)
       "* Not Committed Yet*")
      (t
-      (let ((commit (vc-msg-sdk-short-id (plist-get info :id)))
+      (let ((commit (plist-get info :id))
             (author-with-mail (format "%s %s"
                                       author (plist-get info :author-mail)))
             (author-date (format "%s (%s)"
@@ -180,13 +180,13 @@ Parse the command execution output and return a plist:
             (committer-date (format "%s (%s)"
                                     (vc-msg-sdk-format-datetime (plist-get info :committer-time))
                                     (vc-msg-sdk-format-timezone (plist-get info :committer-tz)))))
-        (concat (mapconcat (pcase-lambda (`(,key . ,value))
-                             (format "%-14s %s" (concat key ":") value))
-                           `(("Commit" . ,commit)
-                             ("Author" . ,author-with-mail)
+        (concat commit "\n"
+                (mapconcat (pcase-lambda (`(,key . ,value))
+                             (format "%-11s %s" (concat key ":") value))
+                           `(("Author" . ,author-with-mail)
                              ("AuthorDate" . ,author-date)
-                             ("Committer" . ,committer-with-mail)
-                             ("CommitterDate" . ,committer-date))
+                             ("Commit" . ,committer-with-mail)
+                             ("CommitDate" . ,committer-date))
                            "\n")
                 "\n"
                 (make-string 50 ?-) "\n"
