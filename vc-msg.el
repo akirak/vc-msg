@@ -274,8 +274,12 @@ and is a blackbox to 'vc-msg.el'."
   (interactive)
   (cl-ecase vc-msg-executer
     ('vc-msg-git-execute
-     (let ((commit (plist-get vc-msg-commit-info :id)))
-       (magit-log-other (list "HEAD" commit))))))
+     (let* ((commit (plist-get vc-msg-commit-info :id))
+            (buffer (magit-log-setup-buffer '("HEAD") nil nil)))
+       (with-current-buffer buffer
+         (goto-char (point-min))
+         (when (re-search-forward (concat "^" (substring commit 0 7)) nil t)
+           (beginning-of-line)))))))
 
 (pretty-hydra-define vc-msg-hydra
   (:title (concat "vc-msg\n\n"
