@@ -180,10 +180,10 @@ Parse the command execution output and return a plist:
             (committer-date (format "%s (%s)"
                                     (vc-msg-sdk-format-datetime (plist-get info :committer-time))
                                     (vc-msg-sdk-format-timezone (plist-get info :committer-tz)))))
-        (concat commit "\n"
-                (mapconcat (pcase-lambda (`(,key . ,value))
+        (concat (mapconcat (pcase-lambda (`(,key . ,value))
                              (format "%-11s %s" (concat key ":") value))
-                           `(("Author" . ,author-with-mail)
+                           `(("SHA1" . ,commit)
+                             ("Author" . ,author-with-mail)
                              ("AuthorDate" . ,author-date)
                              ("Commit" . ,committer-with-mail)
                              ("CommitDate" . ,committer-date))
