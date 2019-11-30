@@ -37,6 +37,8 @@ It can be set the value like `magit-show-commit'."
   :type 'function
   :group 'vc-msg)
 
+(defconst vc-msg-git-value-regexp "\\([^ ].*\\)")
+
 (defun vc-msg-git-shell-output (cmd)
   "Generate clean output by running CMD in shell."
   (let* ((default-directory (vc-msg-sdk-git-rootdir)))
@@ -49,10 +51,7 @@ It can be set the value like `magit-show-commit'."
 (defun vc-msg-git-parse-blame-output (output)
   "Parse git blame OUTPUT."
   (let* (id
-         author
-         author-time
-         author-tz
-         filename
+         headers
          summary
          (lines (split-string output "[\n\r]+"))
          (first-line (nth 0 lines))
@@ -60,26 +59,26 @@ It can be set the value like `magit-show-commit'."
          (code (string-trim (nth (1- (length lines)) lines))))
     (if (string-match "^\\([a-z0-9A-Z]+\\) " output)
         (setq id (match-string 1 output)))
-    (if (string-match "^author +\\([^ ].*\\)" output)
-        (setq author (match-string 1 output)))
-    (if (string-match "^author-time +\\([^ ].*\\)" output)
-        (setq author-time (match-string 1 output)))
-    (if (string-match "^author-time +\\([^ ].*\\)" output)
-        (setq author-time (match-string 1 output)))
-    (if (string-match "^author-tz +\\([^ ].*\\)" output)
-        (setq author-tz (match-string 1 output)))
-    (if (string-match "^summary +\\([^ ].*\\)" output)
-        (setq summary (match-string 1 output)))
-    (if (string-match "^filename +\\([^ ].*\\)" output)
-        (setq filename (match-string 1 output)))
-    (list :id id
-          :author author
-          :author-time author-time
-          :author-tz author-tz
-          :line_num prev-commit-line-num
-          :code code
-          :filename filename
-          :summary summary)))
+    (dolist (name '("author"
+                    "author-mail"
+                    "author-time"
+                    "author-tz"
+                    "committer"
+                    "committer-mail"
+                    "committer-time"
+                    "committer-tz"
+                    "filename"))
+      (when (string-match (format "^%s +%s" name vc-msg-git-value-regexp) output)
+        (push (list (intern (concat ":" name))
+                    (match-string 1 output))
+              headers))
+      (when (string-match "^summary +\\(.+\\)" output)
+        (setq summary (match-string 1 output))))
+    (append (list :id id
+                  :line_num prev-commit-line-num
+                  :summary summary
+                  :code code)
+            (apply #'append headers))))
 
 ;;;###autoload
 (defun vc-msg-git-blame-arguments (line-num)
@@ -169,12 +168,29 @@ Parse the command execution output and return a plist:
      ((string-match-p "Not Committed Yet" author)
       "* Not Committed Yet*")
      (t
-      (format "Commit: %s\nAuthor: %s\nDate: %s\nTimezone: %s\n\n%s"
-              (vc-msg-sdk-short-id (plist-get info :id))
-              author
-              (vc-msg-sdk-format-datetime (plist-get info :author-time))
-              (vc-msg-sdk-format-timezone (plist-get info :author-tz))
-              (plist-get info :summary))))))
+      (let ((commit (vc-msg-sdk-short-id (plist-get info :id)))
+            (author-with-mail (format "%s %s"
+                                      author (plist-get info :author-mail)))
+            (author-date (format "%s (%s)"
+                                 (vc-msg-sdk-format-datetime (plist-get info :author-time))
+                                 (vc-msg-sdk-format-timezone (plist-get info :author-tz))))
+            (committer-with-mail (format "%s %s"
+                                         (plist-get info :committer)
+                                         (plist-get info :committer-mail)))
+            (committer-date (format "%s (%s)"
+                                    (vc-msg-sdk-format-datetime (plist-get info :committer-time))
+                                    (vc-msg-sdk-format-timezone (plist-get info :committer-tz)))))
+        (concat (mapconcat (pcase-lambda (`(,key . ,value))
+                             (format "%-14s %s" (concat key ":") value))
+                           `(("Commit" . ,commit)
+                             ("Author" . ,author-with-mail)
+                             ("AuthorDate" . ,author-date)
+                             ("Committer" . ,committer-with-mail)
+                             ("CommitterDate" . ,committer-date))
+                           "\n")
+                "\n"
+                (make-string 50 ?-) "\n"
+                (plist-get info :summary)))))))
 
 (defun vc-msg-git-show-code ()
   "Show code."
