@@ -42,7 +42,13 @@ It can be set the value like `magit-show-commit'."
 (defun vc-msg-git-shell-output (cmd)
   "Generate clean output by running CMD in shell."
   (let* ((default-directory (vc-msg-sdk-git-rootdir)))
-    (string-trim (shell-command-to-string cmd))))
+    (string-trim
+     (with-output-to-string
+       (with-current-buffer
+           standard-output
+         (let ((exit (process-file shell-file-name nil t nil shell-command-switch cmd)))
+           (unless (eq 0 exit)
+             (error "Non-zero exit code %d from command %s" exit cmd))))))))
 
 (defun vc-msg-git-generate-cmd (opts)
   "Generate Git command from OPTS."
