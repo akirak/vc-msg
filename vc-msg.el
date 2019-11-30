@@ -287,6 +287,14 @@ and is a blackbox to 'vc-msg.el'."
     ('vc-msg-git-execute
      (magit-blame))))
 
+(defun vc-msg-copy-link ()
+  (interactive)
+  (cl-ecase vc-msg-executer
+    ('vc-msg-git-execute
+     (require 'git-link)
+     (let ((git-link-use-commit t))
+       (call-interactively #'git-link)))))
+
 (pretty-hydra-define vc-msg-hydra
   (:title (concat "vc-msg\n\n"
                   (cl-etypecase vc-msg-commit-info
@@ -306,7 +314,8 @@ and is a blackbox to 'vc-msg.el'."
                                 (funcall vc-msg-get-version-function))))
           :quit-key ("C-g" "q"))
   ("Copy info"
-   (("wa" vc-msg-copy-all "All" :exit t))
+   (("wa" vc-msg-copy-all "All" :exit t)
+    ("wl" vc-msg-copy-link "Commit URL" :exit t))
    "Visit"
    (("c" vc-msg-show-commit "Commit" :exit t)
     ("l" vc-msg-log "Log" :exit t))
