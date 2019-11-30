@@ -281,6 +281,12 @@ and is a blackbox to 'vc-msg.el'."
          (when (re-search-forward (concat "^" (substring commit 0 7)) nil t)
            (beginning-of-line)))))))
 
+(defun vc-msg-blame ()
+  (interactive)
+  (cl-ecase vc-msg-executer
+    ('vc-msg-git-execute
+     (magit-blame))))
+
 (pretty-hydra-define vc-msg-hydra
   (:title (concat "vc-msg\n\n"
                   (cl-etypecase vc-msg-commit-info
@@ -303,7 +309,11 @@ and is a blackbox to 'vc-msg.el'."
    (("wa" vc-msg-copy-all "All" :exit t))
    "Visit"
    (("c" vc-msg-show-commit "Commit" :exit t)
-    ("l" vc-msg-log "Log" :exit t))))
+    ("l" vc-msg-log "Log" :exit t))
+   "Blame"
+   (("bb" magit-blame-addition "Add")
+    ("bq" magit-blame-quit "Quit")
+    ("bc" magit-blame-cycle-style "Style"))))
 
 ;;;###autoload
 (defun vc-msg-show ()
