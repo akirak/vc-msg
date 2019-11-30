@@ -192,6 +192,12 @@ and is a blackbox to 'vc-msg.el'."
   "Store the data extracted by (plist-get :execute plugin)."
   :type 'sexp)
 
+(defvar-local vc-msg-current-file nil)
+(defvar-local vc-msg-executer nil)
+(defvar-local vc-msg-formatter nil)
+(defvar-local vc-msg-commit-info nil)
+(defvar-local vc-msg-extra-commands nil)
+
 (defun vc-msg-match-plugin (plugin)
   "Try match PLUGIN.  Return string keyword or nil."
   (let* ((type (car plugin))
@@ -252,12 +258,6 @@ and is a blackbox to 'vc-msg.el'."
       (message "Copy all from commit %s"
                (vc-msg-get-friendly-id plugin
                                  vc-msg-previous-commit-info)))))
-
-(defvar-local vc-msg-current-file nil)
-(defvar-local vc-msg-executer nil)
-(defvar-local vc-msg-formatter nil)
-(defvar-local vc-msg-commit-info nil)
-(defvar-local vc-msg-extra-commands nil)
 
 (defun vc-msg-show-commit ()
   "Show the commit in `vc-msg-commit-info'."
