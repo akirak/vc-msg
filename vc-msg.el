@@ -299,11 +299,15 @@ and is a blackbox to 'vc-msg.el'."
   (:title (concat "vc-msg\n\n"
                   (cl-etypecase vc-msg-commit-info
                     (list
-                     (mapconcat (lambda (s) (concat "  " s))
-                                (split-string
-                                 (funcall vc-msg-formatter vc-msg-commit-info)
-                                 "\n")
-                                "\n"))
+                     (let* ((pad 2)
+                            (padstr (make-string pad ?\ ))
+                            (width (- (min (window-width) 100) (* pad 2)))
+                            (src (funcall vc-msg-formatter vc-msg-commit-info)))
+                       (thread-last (split-string src "\n")
+                         (mapcar (lambda (s) (seq-partition s width)))
+                         (apply #'append)
+                         (mapcar (lambda (s) (concat padstr s padstr)))
+                         (funcall (lambda (xs) (string-join xs "\n"))))))
                     (string
                      vc-msg-commit-info)))
           :pre (setq vc-msg-commit-info
